@@ -4,47 +4,46 @@ const app = express() ;
 const cont = require('./controllers/controller');
 const User = require('./models/db');
 var bodyparser = require('body-parser');
+const Auth = require('./controllers/checkauth')
 var router = express.Router();
-const checkAuth = ('./controllers/checkauth');
+
+const signup = require('./routes/router..signup');
+const login = require('./routes/router.login');
+const delet = require('./routes/router.delete')
 
 
 
 
-
-
-
-
-/*const checkJwt = jwt({
-    secret:jwksRsa.expressJwtSecret({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 5,
-        jwksUri:`https://reidefe.eu.auth0.com/.well-known/jwks.json`
-    }),
-
-    audience: 'https://reidefe.eu.auth0.com/api/v2/',
-    issuer: '`https://reidefe.eu.auth0.com/',
-    algorithms: [RS256]
-});*/
 
 app.use(bodyparser.json());
-app.use(bodyparser.urlencoded({extended:false}));
+app.use(bodyparser.urlencoded({extended:true}));
 app.get('/', (req, res) => {
     res.send('yoooo');
 });
 
 
-//app.post('/mypage',checkAuth,controller.got_to_my_page);
-//app.get('path', controller.post_to_my_page);
-app.post('/signUp', cont.createNewUser);
-app.post('/login', cont.login)
-app.delete('/:userId', cont.deleteUser);
+app.post('/signUp',cont.createNewUser);
+app.post('/login',cont.login);
+app.post('/userId', cont.deleteUser, Auth.auth);
+app.get('/users', cont.getAllUsers);
+
+var port = process.env.PORT || 8080
 
 
 
-mongoose.connect('mongodb://localhost:27017/myapp')
 
-app.listen(9000,() =>{
+
+
+
+/***mongoose.connect('mongodb://localhost/myapp', (err)=>{
+    if(err){
+        console.log(err)
+    }else{
+        console.log('connection sucessfull')
+    }
+})**/
+
+app.listen(port,() =>{
     console.log('server started')
 })
 

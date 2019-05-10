@@ -1,19 +1,34 @@
-const express = require('express')
+var express = require('express')
 var User = require ('../models/db')
-const app = express();
-const bodyparser = require('body-parser')
-app.use(bodyparser.json());
-app.use(bodyparser.urlencoded({extended:true}));
+var app = express();
+var bodyParser = require('body-parser')
+var jwt = require('jsonwebtoken');
+//var jwksRsa = require('jwks-rsa');
+var bcrypt = require('bcrypt');
+var mongoose = require('mongoose')
+var morgan = require('morgan');
+
+app.use(morgan('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended:true}));
+app.use((req, res, next) =>{
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', '*');
+    if(req.method == 'OPTIONS'){
+        res.header('Access-Control-Allow-Methods', 'PUT, POST, PATH, GET, DELETE');
+        return res.status(200) .json({});
+    }
+})
+
+exports.getAllUsers = (function(req,res,next){
+    User.find({}).exec().then(users =>{
+        res.send(users)
+    });
+})
 
 
-const jwt = require('jsonwebtoken');
-const jwksRsa = require('jwks-rsa');
-const bcrypt = require('bcrypt');
 
-
-exports.createNewUser = (res, req, next) =>{
-    User.find({email:req.param.email}) .exec() 
-    .then(user =>{
+exports.createNewUser = (function( req,res, next) {  User.find({email:req.body.email}).exec().then(user =>{
         if(user.length >= 1)
         {
             return res.status(409) .json({
@@ -28,7 +43,7 @@ exports.createNewUser = (res, req, next) =>{
                 }) ;
                 }else {
                     var user = new User({
-                        _id : new ObjectId(),
+                        _id : new mongoose.Types.ObjectId(),
                         name: req.body.name,
                         surname: req.body.surname,
                         email: req.body.email,
@@ -45,22 +60,19 @@ exports.createNewUser = (res, req, next) =>{
                         error: err,
                     })
                 });
-            
+
             })
 
         }
-    })  
+    })
 
-}
-
-
-app.use(bodyparser.json());
-app.use(bodyparser.urlencoded({extended:true}));
+});
 
 
-exports.deleteUser = (res, req, next) => {
-    User.remove({_id:req.param.userId}).exec().then( result =>{
-        res.status(200) .json({
+
+exports.deleteUser = (req,res, next) => {
+    User.deleteOne({_id:req.body.userId}).exec().then( result =>{
+        return res.status(200) .json({
             message: 'user deleted'
         });
 
@@ -76,21 +88,21 @@ exports.deleteUser = (res, req, next) => {
 }
 
 
-exports.login = (res, req, next) => {
-    User.find({ email: req.param.email}).exec()
+exports.login = (req,res, next) => {
+    User.find({ email: req.body.email}).exec()
     .then(user =>{
-        if(user.length <= 1){
-            res.status(401) .json({
-                message: 'auth failed'
-            })
+        if(user.length < 1){
+            return res.status(401) .json({
+                message: 'auth failed because user doesnt exist'
+            });
         }
         bcrypt.compare(req.body.password, user[0].password, (err, result) =>{
             if(err){
                 return res.status(401) .json({
-                    message: 'auth failed'
+                    message: 'auth failed to login user'
                 })
             }
-            if(result){
+            if (result) {
                const token =  jwt.sign({
                    email: user[0].email,
                    userId: user[0]._id
@@ -105,7 +117,9 @@ exports.login = (res, req, next) => {
                     token: token,
                 });
             }
+           
         })
+        
     })
     .catch(err =>{
         console.log(err);

@@ -1,24 +1,31 @@
-const express = require('express');
-const app = express ();
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema
+var express = require('express');
+var app = express ();
+var mongoose = require('mongoose');
 
-mongoose.connect('mongodb://127.0.0.1:27017/myapp')
+var mongodb = 'mongodb://localhost/myapp';
+
+mongoose.connect(mongodb, {useNewUrlParser:true});
 
 
-var UserSchema = new Schema({
-    _id: Schema.Types.ObjectId,
+var db = mongoose.connection;
+
+db.on('error', console.error.bind(console, "mongodb connection error"))
+
+
+
+
+
+
+var userSchema =  mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
     name : String,
-    surname : {required: true, type: String}, 
-    password : { type: String, required: true},   
-    email: { required: true, type: String, unique: true, match:/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/ },
-    comment: { body: String, date: Date},
-    permissionLevel : Number,
+    surname : {required: true, type: String},
+    password : { type: String, required: true},
+    email: { required: true, type: String, unique: true, match:/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/ }
+/**{
+    collection: 'User'}**/
 });
 
-var user = mongoose.model = ('users', UserSchema);
 
-module.export = user;
-
-
-                                                                                                      
+var user = mongoose.model ('User', userSchema);
+module.exports = user;
